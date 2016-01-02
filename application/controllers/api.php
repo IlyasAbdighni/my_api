@@ -22,7 +22,7 @@ class Api extends REST_Controller{
     // );
     $users = $this->Model_internal_users->get_by(array("idInternalUser" => $user_id ));
     if (isset($users["idInternalUser"])) {
-      $this->response(array("status" => "success", "message" => $users), 200);
+      $this->response(array("status" => "success", "message" => $users), REST_Controller::HTTP_OK);
     } else {
       $this->response(array("status" => "failed", "message" => "The specified user could not be found."), REST_Controller::HTTP_NOT_FOUND);
     }
@@ -34,11 +34,19 @@ class Api extends REST_Controller{
     $this->load->library("form_validation");
     $this->form_validation->set_data($this->put());
     if ($this->form_validation->run("user_put") != false) {
-      die("good data!");
+      $this->load->model("Model_internal_users");
+      $user = $this->put();
+      $internalUser_id = $this->Model_internal_users->insert($user);
+      if (!$internalUser_id) {
+        $this->response( array("status" => "failed", "message" => "An ucexpected error uccred when inserting to the database."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
+      } else {
+        $this->response(array("status" => "success", "message" => "successfully inserted to the database"), REST_Controller::HTTP_OK);
+      }
     } else {
-      die("bad data!");
+      $this->response( array("status" => "failed", "message" => $this->form_validation->get_errors_as_array()), REST_Controller::HTTP_BAD_REQUEST );
     }
   }
+
 
 
 }
