@@ -14,6 +14,7 @@ class Api extends REST_Controller{
       $this->load->helper("my_api");
   }
 
+  //get request
   function users_get() {
     $user_id = $this->uri->segment(3);
     $this->load->model("Model_internal_users");
@@ -71,18 +72,21 @@ class Api extends REST_Controller{
         //$this->form_validation->set_message("is_unique[internaluser.InternalUserEmail]", "This email is already exist!");
         if ($this->form_validation->run("user_post") != false) {
           $this->load->model("Model_internal_users");
+
           // validate email address if it exists
-          $safe_email_address = !isset($data["InternalUserEmail"]) || $data["InternalUserEmail"] == $user["InternalUserEmail"] || !$this->Model_internal_users->get_by(array("InternalUserEmail" => $data["InternalUserEmail"]));
-          if (!$safe_email_address) {
-            $this->response( array("status" => "failed", "message" => "This email address is already in use."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
-          }
+          // $safe_email_address = !isset($data["InternalUserEmail"]) || $data["InternalUserEmail"] == $user["InternalUserEmail"] || !$this->Model_internal_users->get_by(array("InternalUserEmail" => $data["InternalUserEmail"]));
+          // if (!$safe_email_address) {
+          //   $this->response( array("status" => "failed", "message" => "This email address is already in use."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
+          // }
+
           // insert the post data to the database
           $updated = $this->Model_internal_users->update($user_id, $data);
           if (!$updated) {
             $this->response( array("status" => "failed", "message" => "An ucexpected error uccred when updating to the database."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
           } else {
-            $this->response(array("status" => "success", "message" => "successfully inserted to the database"), REST_Controller::HTTP_OK);
+            $this->response(array("status" => "success", "message" => "successfully updated to the database"), REST_Controller::HTTP_OK);
           }
+
         } else {
           $this->response( array("status" => "failed", "message" => $this->form_validation->get_errors_as_array()), REST_Controller::HTTP_BAD_REQUEST );
         }
@@ -93,7 +97,28 @@ class Api extends REST_Controller{
 
   }
 
+  //delete request
+  function user_delete() {
+    $user_id = $this->uri->segment(3);
+    $this->load->model("Model_internal_users");
+    // $users = array(
+    //   1 => array("first_name" => "constant_ilyas", "last_name" => "constant_abdighni"),
+    //   2 => array("first_name" => "constant_gvlmerem", "last_name" => "constant_mutellip"),
+    // );
+    $user = $this->Model_internal_users->get_by(array("idInternalUser" => $user_id ));
+    if (isset($user["idInternalUser"])) {
+      $delete = $this->Model_internal_users->delete($user_id);
+      if (!$delete) {
+        $this->response( array("status" => "failed", "message" => "An ucexpected error uccred when try to delete to the database."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
+      } else {
+        $this->response(array("status" => "success", "message" => "successfully deleted from the database"), REST_Controller::HTTP_OK);
+      }
+    } else {
+      $this->response(array("status" => "failed", "message" => "The specified user could not be found."), REST_Controller::HTTP_NOT_FOUND);
+    }
 
+
+  }
 
 }
 
