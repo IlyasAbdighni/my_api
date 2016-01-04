@@ -25,6 +25,19 @@
       return $user;
     }
 
+    public function can_log_in() {
+
+      $this->db->where('InternalUserName', $this->input->post("InternalUserName"));
+      $this->db->where('InternalUserPassword', md5($this->input->post("InternalUserPassword")));
+      $query = $this->db->get("internaluser");
+
+      if ($query->num_rows() == 1) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+
 
 
 
