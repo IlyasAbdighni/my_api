@@ -27,8 +27,8 @@
 
     public function can_log_in() {
 
-      $this->db->where('InternalUserName', $this->input->post("InternalUserName"));
-      $this->db->where('InternalUserPassword', md5($this->input->post("InternalUserPassword")));
+      $this->db->where('InternalUserName', $this->input->post("user_name"));
+      $this->db->where('InternalUserPassword', md5($this->input->post("password")));
       $query = $this->db->get("internaluser");
 
       if ($query->num_rows() == 1) {

@@ -136,7 +136,14 @@ class Api extends REST_Controller{
 				$this->response(array("status" => "failed", "message" => "fdsaf"));
 			}
 			// insert the put data to the database
-			$internalUser_id = $this->Model_internal_users->insert($this->put());
+            $fields = array(
+                "InternalUserName" => $this-put("user_name"),
+                "InternalUserEmail" => $this-put("user_email"),
+                "InternalUserPassword" => $this-put("password"),
+                "InternalUserPhone" => $this-put("user_phone"),
+                "InternalUserAddress" => $this-put("user_address"),
+            );
+			$internalUser_id = $this->Model_internal_users->insert($fields);
 			if (!$internalUser_id) {
 				$this->response( array("status" => "failed", "message" => preg_replace("#[\n]+#", "", "An ucexpected error occured when inserting to the database.")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
 			} else {
@@ -157,8 +164,8 @@ class Api extends REST_Controller{
 		$this->load->library("form_validation");
 		$this->form_validation->set_error_delimiters('', '');
 
-		$this->form_validation->set_rules("InternalUserName", "Email", "trim|required|callback_validate_credentials");
-		$this->form_validation->set_rules("InternalUserPassword", "Password", "trim|required|md5");
+		$this->form_validation->set_rules("user_name", "Email", "trim|required|callback_validate_credentials");
+		$this->form_validation->set_rules("password", "Password", "trim|required|md5");
 		//$this->form_validation->set_message("required", "shit");
 
 		if ($this->form_validation->run()) {
