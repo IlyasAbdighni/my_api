@@ -101,7 +101,7 @@ class Api extends REST_Controller{
 	//delete request
 	function user_delete() {
 		$user_id = $this->uri->segment(3);
-		$this->load->model("Model_internal_users");
+		$this->load->model("model_internal_users");
 		// $users = array(
 		//   1 => array("first_name" => "constant_ilyas", "last_name" => "constant_abdighni"),
 		//   2 => array("first_name" => "constant_gvlmerem", "last_name" => "constant_mutellip"),
@@ -129,7 +129,7 @@ class Api extends REST_Controller{
 		$this->form_validation->set_data($this->put());
 		//$this->form_validation->set_message("is_unique[internaluser.InternalUserEmail]", "This email is already exist!");
 		if ($this->form_validation->run("user_register_put") != false) {
-			$this->load->model("Model_internal_users");
+			$this->load->model("model_internal_users");
 			// validate email address if it exists
 			$email_address_exist = $this->Model_internal_users->get_by(array("InternalUserEmail" => $this->put("InternalUserEmail")));
 			if ($email_address_exist) {
@@ -138,13 +138,13 @@ class Api extends REST_Controller{
 			// insert the put data to the database
 			$internalUser_id = $this->Model_internal_users->insert($this->put());
 			if (!$internalUser_id) {
-				$this->response( array("status" => "failed", "message" => "An ucexpected error occured when inserting to the database."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
+				$this->response( array("status" => "failed", "message" => preg_replace("#[\n]+#", "", "An ucexpected error occured when inserting to the database.")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
 			} else {
-				$this->response(array("status" => "success", "message" => "successfully inserted to the database"), REST_Controller::HTTP_OK);
+				$this->response(array("status" => "success", "message" => preg_replace('#[\n]+#', '', 'successfully inserted to the database')), REST_Controller::HTTP_OK);
 			}
 		} else {
 			$error_message = $this->form_validation->first_error();
-			$this->response( array("status" => "failed", "message" => $error_message), REST_Controller::HTTP_BAD_REQUEST );
+			$this->response( array("status" => "failed", "message" => preg_replace('#[\n]+#', '', $error_message)), REST_Controller::HTTP_BAD_REQUEST );
 		}
 
 
@@ -175,7 +175,7 @@ class Api extends REST_Controller{
 
 	public function validate_credentials() {
 
-		$this->load->model("Model_internal_users");
+		$this->load->model("model_internal_users");
 
 		if ($this->model_internal_users->can_log_in()) {
 			return true;
@@ -198,10 +198,11 @@ class Api extends REST_Controller{
 		$this->form_validation->set_rules("UniversityAddress", "Address of the university", "trim|required");
 		$this->form_validation->set_rules("UniversityPhoneNumber", "Address of the university", "trim|required|min_length[7]|max_length[20]");
 		$this->form_validation->set_rules("UniversityDescription", "Discription of the university", "trim");
+		$this->form_validation->set_rules("UniversityLogoURL", "logo of the university", "trim");
 		//$this->form_validation->set_message("required", "shit");
 
 		if ($this->form_validation->run()) {
-			$this->load->model("Model_university");
+			$this->load->model("model_university");
             $university_id = $this->model_university->insert($this->post());
             if (!$university_id) {
 				$this->response( array("status" => "failed", "message" => "An ucexpected error occured when inserting the univeristy to the database."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
@@ -220,7 +221,7 @@ class Api extends REST_Controller{
     
     public function getUniversities_get() {
 		//$user_id = $this->uri->segment(3);
-		$this->load->model("Model_university");
+		$this->load->model("model_university");
 		// $users = array(
 		//   1 => array("first_name" => "constant_ilyas", "last_name" => "constant_abdighni"),
 		//   2 => array("first_name" => "constant_gvlmerem", "last_name" => "constant_mutellip"),
@@ -238,12 +239,12 @@ class Api extends REST_Controller{
     
     public function getAUniversity_get() {
 		$university_id = $this->uri->segment(3);
-		$this->load->model("Model_university");
+		$this->load->model("model_university");
 		// $users = array(
 		//   1 => array("first_name" => "constant_ilyas", "last_name" => "constant_abdighni"),
 		//   2 => array("first_name" => "constant_gvlmerem", "last_name" => "constant_mutellip"),
 		// );
-		$university = $this->Model_university->get_by(array("idUniversity" => $university_id) );
+		$university = $this->model_university->get_by(array("idUniversity" => $university_id) );
 		if (isset($university)) {
             
             
@@ -252,6 +253,75 @@ class Api extends REST_Controller{
 			$this->response(array("status" => "failed", "message" => "The specified user could not be found."), REST_Controller::HTTP_NOT_FOUND);
 		}
 	}
+    
+    
+    
+    
+    public function addRecord_post () {
+        $this->load->library("form_validation");
+		$this->form_validation->set_error_delimiters('', '');
+        $this->form_validation->set_data($this->post());
+
+		$this->form_validation->set_rules("university_id", "id of the university", "trim|required");
+		$this->form_validation->set_rules("category_type", "type of this record", "trim|required");
+		$this->form_validation->set_rules("user_id", "user id is required", "trim|required");
+		$this->form_validation->set_rules("content", "content of this record", "trim");
+
+		if ($this->form_validation->run()) {
+            
+            $university_id = $this->post("university_id");
+            $category_id = $this->post("category_type");
+            $user_id = $this->post("user_id");
+            $content = $this->post("content");
+            
+			$this->load->model("model_record");
+            $university_record_id = $this->model_record->insert(array(
+                "University_idUniversity" => $university_id,
+                "Catagory_idCatagory" => $category_id
+            ));
+            
+            if (!$university_record_id) {
+				$this->response( array("status" => "failed", "message" => "An ucexpected error occured when inserting university id and category id to record table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
+			} else {
+                
+                $record = $this->model_record->get_by(array("University_idUniversity" => $university_id));
+                $record_id = $record["idRecord"];
+                
+                $this->load->model("model_internal_users");
+                $user = $this->model_internal_users->get_by(array("idInternalUser" => $user_id));
+                if (isset($user["idInternalUser"])) {
+                    
+                    $user_type = $user["InternalUserType_idInternalUserType"];
+                    
+                    $fields = array(
+                        "Record_idRecord" => $record_id,
+                        "Record_University_idUniversity" => $university_id,
+                        "Record_Catagory_idCatagory" => $category_id,
+                        "InternalUser_idInternalUser" => $user_id,
+                        "InternalUser_InternalUserType_idInternalUserType" => $user_type,
+                        "Status_idStatus" => 1,
+                        
+                    );
+                    
+                    $this->load->model("model_history");
+                    $history_table = $this->model_history->insert($fields);
+                    if (!$university_id) {
+                        $this->response( array("status" => "failed", "message" => "Could not update history table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
+                    } else {
+                        $this->response(array("status" => "success", "message" => "history table updated"), REST_Controller::HTTP_OK);
+                    }
+                } else {
+                    $this->response(array("status" => "failed", "message" => "The specified user could not be found."), REST_Controller::HTTP_NOT_FOUND);
+                }
+			}
+		} else {
+			$error_message = $this->form_validation->first_error();
+			$this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', $error_message)));
+		}   
+    }
+    
+    
+    
 		
 
 
