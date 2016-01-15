@@ -131,19 +131,19 @@ class Api extends REST_Controller{
 		if ($this->form_validation->run("user_register_put") != false) {
 			$this->load->model("model_internal_users");
 			// validate email address if it exists
-			$email_address_exist = $this->Model_internal_users->get_by(array("InternalUserEmail" => $this->put("InternalUserEmail")));
-			if ($email_address_exist) {
-				$this->response(array("status" => "failed", "message" => "fdsaf"));
-			}
+//			$email_address_exist = $this->Model_internal_users->get_by(array("InternalUserEmail" => $this->put("user_email")));
+//			if ($email_address_exist) {
+//				$this->response(array("status" => "failed", "message" => "fdsaf"));
+//			}
 			// insert the put data to the database
             $fields = array(
-                "InternalUserName" => $this-put("user_name"),
-                "InternalUserEmail" => $this-put("user_email"),
-                "InternalUserPassword" => $this-put("password"),
-                "InternalUserPhone" => $this-put("user_phone"),
-                "InternalUserAddress" => $this-put("user_address"),
+                "InternalUserName" => $this->put("user_name"),
+                "InternalUserEmail" => $this->put("user_email"),
+                "InternalUserPassword" => $this->put("password"),
+                "InternalUserPhone" => $this->put("user_phone"),
+                "InternalUserAddress" => $this->put("user_address"),
             );
-			$internalUser_id = $this->Model_internal_users->insert($fields);
+			$internalUser_id = $this->model_internal_users->insert($fields);
 			if (!$internalUser_id) {
 				$this->response( array("status" => "failed", "message" => preg_replace("#[\n]+#", "", "An ucexpected error occured when inserting to the database.")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
 			} else {
@@ -233,7 +233,7 @@ class Api extends REST_Controller{
 		//   1 => array("first_name" => "constant_ilyas", "last_name" => "constant_abdighni"),
 		//   2 => array("first_name" => "constant_gvlmerem", "last_name" => "constant_mutellip"),
 		// );
-		$universities = $this->Model_university->get_all();
+		$universities = $this->model_university->get_all();
 		if (isset($universities)) {
             
             
@@ -315,7 +315,8 @@ class Api extends REST_Controller{
                     if (!$university_id) {
                         $this->response( array("status" => "failed", "message" => "Could not update history table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
                     } else {
-                        $this->response(array("status" => "success", "message" => "history table updated"), REST_Controller::HTTP_OK);
+                        //$history = $this->model_history->get_by(array());
+                        $this->response(array("status" => "success", "message" => $history_table), REST_Controller::HTTP_OK);
                     }
                 } else {
                     $this->response(array("status" => "failed", "message" => "The specified user could not be found."), REST_Controller::HTTP_NOT_FOUND);

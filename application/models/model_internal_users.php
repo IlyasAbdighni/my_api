@@ -19,7 +19,7 @@
 
     protected function prep_data($user) {
       $user["InternalUserPassword"] = md5($user["InternalUserPassword"]);
-      $user["InternalUserConfirmPassword"] = md5($user["InternalUserConfirmPassword"]);
+      //$user["InternalUserConfirmPassword"] = md5($user["InternalUserConfirmPassword"]);
       //$user["ip_address"] = $this->input->ip_address();
       //$user["created_at"] = date("Y-m-d: H:i:s");
       return $user;
