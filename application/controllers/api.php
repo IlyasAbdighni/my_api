@@ -11,7 +11,7 @@ class Api extends REST_Controller{
 	{
 			// Construct the parent class
 			parent::__construct();
-			$this->load->helper("my_api");
+			$this->load->helper("my_api", "date");
 	}
 
 	//get request
@@ -73,12 +73,6 @@ class Api extends REST_Controller{
 				//$this->form_validation->set_message("is_unique[internaluser.InternalUserEmail]", "This email is already exist!");
 				if ($this->form_validation->run("user_post") != false) {
 					$this->load->model("Model_internal_users");
-
-					// validate email address if it exists
-					// $safe_email_address = !isset($data["InternalUserEmail"]) || $data["InternalUserEmail"] == $user["InternalUserEmail"] || !$this->Model_internal_users->get_by(array("InternalUserEmail" => $data["InternalUserEmail"]));
-					// if (!$safe_email_address) {
-					//   $this->response( array("status" => "failed", "message" => "This email address is already in use."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
-					// }
 
 					// insert the post data to the database
 					$updated = $this->Model_internal_users->update($user_id, $data);
@@ -164,7 +158,7 @@ class Api extends REST_Controller{
 		$this->load->library("form_validation");
 		$this->form_validation->set_error_delimiters('', '');
 
-		$this->form_validation->set_rules("user_name", "user  name", "trim|required|callback_validate_credentials");
+		$this->form_validation->set_rules("user_name", "user name", "trim|required|callback_validate_credentials");
 		$this->form_validation->set_rules("password", "Password", "trim|required|md5");
 		//$this->form_validation->set_message("required", "shit");
 
@@ -287,6 +281,8 @@ class Api extends REST_Controller{
 		$this->form_validation->set_rules("category_type", "type of this record", "trim|required");
 		$this->form_validation->set_rules("user_id", "user id is required", "trim|required");
 		$this->form_validation->set_rules("content", "content of this record", "trim");
+		$this->form_validation->set_rules("like_num", "number of likes for this record", "trim");
+		$this->form_validation->set_rules("dislike_num", "number of dislikes for this record", "trim");
 
 		if ($this->form_validation->run()) {
             
@@ -295,10 +291,18 @@ class Api extends REST_Controller{
             $user_id = $this->post("user_id");
             $content = $this->post("content");
             
+            $like_num = 0;
+            $dislike_num = 0;
+            $time = date('Y-m-d H:i:s');
+            
 			$this->load->model("model_record");
             $record_id = $this->model_record->insert(array(
                 "University_idUniversity" => $university_id,
-                "Catagory_idCatagory" => $category_id
+                "Catagory_idCatagory" => $category_id,
+                "LikeNumber" => $this->post("like_num"),
+                "DislikeNumber" => $this->post("dislike_num"),
+                "LikeTimeStamp" => $time,
+                "DislikeTimeStamp" => $time,
             ));
             
             if (!$record_id) {
@@ -335,7 +339,7 @@ class Api extends REST_Controller{
                         if(!$content_id) {
                             $this->response( array("status" => "failed", "message" => "Could not update content table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
                         } else {
-                            $this->response(array("status" => "success", "message" => "successfully updated!"), REST_Controller::HTTP_OK);    
+                            $this->response(array("status" => "success", "message" => "successfully updated"), REST_Controller::HTTP_OK);    
                         }
                         
                     }
