@@ -170,8 +170,13 @@ class Api extends REST_Controller{
 
 		if ($this->form_validation->run()) {
 			$this->load->model("Model_internal_users");
-            $user_id = $this->model_internal_users->get_by("idInternalUser");
-			$this->response(array("status" => "success", "message" => "you loged in!"), REST_Controller::HTTP_OK);
+            $user_name = $this->post("user_name");
+            $user = $this->model_internal_users->get_by(array("InternalUserName" => $user_name));
+            $user_id = $user["idInternalUser"];
+			$this->response(array("status" => "success", "message" => array(
+                "success message" => "you loged in!",
+                "user_id" => $user_id,
+            )), REST_Controller::HTTP_OK);
 		} else {
 			$error_message = $this->form_validation->first_error();
 			$this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', $error_message)));
