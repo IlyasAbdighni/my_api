@@ -68,7 +68,7 @@ class Api extends REST_Controller{
 		$user = $this->Model_internal_users->get_by(array("idInternalUser" => $user_id ));
 		if (isset($user["idInternalUser"])) {
 				$this->load->library("form_validation");
-				$data = remove_unknown_fields( $this->post(),             $this->form_validation->get_field_names("user_post"));
+				$data = remove_unknown_fields( $this->post(), $this->form_validation->get_field_names("user_post"));
 				$this->form_validation->set_data($data);
 				//$this->form_validation->set_message("is_unique[internaluser.InternalUserEmail]", "This email is already exist!");
 				if ($this->form_validation->run("user_post") != false) {
@@ -164,7 +164,7 @@ class Api extends REST_Controller{
 		$this->load->library("form_validation");
 		$this->form_validation->set_error_delimiters('', '');
 
-		$this->form_validation->set_rules("user_name", "Email", "trim|required|callback_validate_credentials");
+		$this->form_validation->set_rules("user_name", "user  name", "trim|required|callback_validate_credentials");
 		$this->form_validation->set_rules("password", "Password", "trim|required|md5");
 		//$this->form_validation->set_message("required", "shit");
 
@@ -282,17 +282,14 @@ class Api extends REST_Controller{
             $content = $this->post("content");
             
 			$this->load->model("model_record");
-            $university_record_id = $this->model_record->insert(array(
+            $record_id = $this->model_record->insert(array(
                 "University_idUniversity" => $university_id,
                 "Catagory_idCatagory" => $category_id
             ));
             
-            if (!$university_record_id) {
+            if (!$record_id) {
 				$this->response( array("status" => "failed", "message" => "An ucexpected error occured when inserting university id and category id to record table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
 			} else {
-                
-                $record = $this->model_record->get_by(array("University_idUniversity" => $university_id));
-                $record_id = $record["idRecord"];
                 
                 $this->load->model("model_internal_users");
                 $user = $this->model_internal_users->get_by(array("idInternalUser" => $user_id));
@@ -311,12 +308,22 @@ class Api extends REST_Controller{
                     );
                     
                     $this->load->model("model_history");
-                    $history_table = $this->model_history->insert($fields);
-                    if (!$university_id) {
+                    $history_id = $this->model_history->insert($fields);
+                    if (!$history_id) {
                         $this->response( array("status" => "failed", "message" => "Could not update history table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
                     } else {
-                        //$history = $this->model_history->get_by(array());
-                        $this->response(array("status" => "success", "message" => $history_table), REST_Controller::HTTP_OK);
+                        $this->load->model("model_content");
+                        $content_fields = array(
+                            "ContentDescription" => $content,
+                            "History_idHistoty" => $history_id
+                        );
+                        $content_id = $this->model_content->insert($content_fields);
+                        if(!$content_id) {
+                            $this->response( array("status" => "failed", "message" => "Could not update content table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
+                        } else {
+                            $this->response(array("status" => "success", "message" => "successfully updated!"), REST_Controller::HTTP_OK);    
+                        }
+                        
                     }
                 } else {
                     $this->response(array("status" => "failed", "message" => "The specified user could not be found."), REST_Controller::HTTP_NOT_FOUND);
