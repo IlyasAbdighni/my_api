@@ -68,7 +68,7 @@ class Api extends REST_Controller{
 		$user = $this->Model_internal_users->get_by(array("idInternalUser" => $user_id ));
 		if (isset($user["idInternalUser"])) {
 				$this->load->library("form_validation");
-				$data = remove_unknown_fields( $this->post(), $this->form_validation->get_field_names("user_post"));
+				$data = remove_unknown_fields( $this->post(), $this->form_validation->get_field_names ("user_post"));
 				$this->form_validation->set_data($data);
 				//$this->form_validation->set_message("is_unique[internaluser.InternalUserEmail]", "This email is already exist!");
 				if ($this->form_validation->run("user_post") != false) {
@@ -201,16 +201,24 @@ class Api extends REST_Controller{
 		$this->form_validation->set_error_delimiters('', '');
         $this->form_validation->set_data($this->post());
 
-		$this->form_validation->set_rules("UniversityName", "Name of the university", "trim|required|is_unique[university.UniversityName]");
-		$this->form_validation->set_rules("UniversityAddress", "Address of the university", "trim|required");
-		$this->form_validation->set_rules("UniversityPhoneNumber", "Address of the university", "trim|required|min_length[7]|max_length[20]");
-		$this->form_validation->set_rules("UniversityDescription", "Discription of the university", "trim");
-		$this->form_validation->set_rules("UniversityLogoURL", "logo of the university", "trim");
+		$this->form_validation->set_rules("university_name", "Name of the university", "trim|required|is_unique[university.UniversityName]");
+		$this->form_validation->set_rules("university_address", "Address of the university", "trim|required");
+		$this->form_validation->set_rules("university_phone", "Phone number of the university", "trim|required|min_length[7]|max_length[20]");
+		$this->form_validation->set_rules("university_website", "the website of the university", "trim");
+		$this->form_validation->set_rules("university_logo", "logo of the university", "trim");
 		//$this->form_validation->set_message("required", "shit");
 
 		if ($this->form_validation->run()) {
+            $fields = array(
+                "UniversityName" => $this->post("university_name"),
+                "UniversityAddress" => $this->post("university_address"),
+                "UniversityPhoneNumber" => $this->post("university_phone"),
+                "UniversityWebsite" => $this->post("university_website"),
+                "UniversityLogoURL" => $this->post("university_logo"),
+            );
+                
 			$this->load->model("model_university");
-            $university_id = $this->model_university->insert($this->post());
+            $university_id = $this->model_university->insert($fields);
             if (!$university_id) {
 				$this->response( array("status" => "failed", "message" => "An ucexpected error occured when inserting the univeristy to the database."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
 			} else {
@@ -335,6 +343,55 @@ class Api extends REST_Controller{
 		}   
     }
     
+    
+    
+    
+    function getRecord_get() {
+		$university_id = $this->uri->segment(3);
+		$this->load->model("model_university");
+		$univerisity = $this->model_university->get_by(array("idUniversity" => $university_id ));
+		if (isset($univerisity["idUniversity"])) {
+            // will show in json
+            $address = $univerisity["UniversityAddress"];
+            $phone = $univerisity["UniversityPhoneNumber"];
+            
+            $this->load->model("model_record");
+            $record = $this->model_record->get_by(array("University_idUniversity" => $university_id));
+            if (isset($record["idRecord"])) {
+                
+                $category_id = $record["Catagory_idCatagory"];
+                
+                $this->load->model("model_category");
+                $category = $this->model_category->get_by(array("idCategory" => $category_id));
+                if (isset($category["CategoryType"])) {
+                    // will show in json
+                    $type = $category["CategoryType"];
+                    
+                    $this->response(array(
+                        "status" => "success",
+                        "message" => array(
+                          "type" => $type,
+                          "university_address" => $address,
+                          "university_phone" => $phone, 
+                        ),
+                    ));
+                } else {
+                    $this->response(array("status" => "failed", "message" => "The specified category could not be found."), REST_Controller::HTTP_NOT_FOUND);
+                }
+                
+                $this->response(array("status" => "success", "message" => $univerisity), REST_Controller::HTTP_OK);
+            } else {
+                $this->response(array("status" => "failed", "message" => "The specified record could not be found."), REST_Controller::HTTP_NOT_FOUND);
+            }
+            $this->load->model("model_category");
+            $this->model_category->get_by(array(""));
+			$this->response(array("status" => "success", "message" => $univerisity), REST_Controller::HTTP_OK);
+		} else {
+			$this->response(array("status" => "failed", "message" => "The specified university could not be found."), REST_Controller::HTTP_NOT_FOUND);
+		}
+
+
+	}
     
     
 		
