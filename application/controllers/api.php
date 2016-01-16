@@ -169,7 +169,8 @@ class Api extends REST_Controller{
 		//$this->form_validation->set_message("required", "shit");
 
 		if ($this->form_validation->run()) {
-			//$this->load->model("Model_internal_users");
+			$this->load->model("Model_internal_users");
+            $user_id = $this->model_internal_users->get_by("idInternalUser");
 			$this->response(array("status" => "success", "message" => "you loged in!"), REST_Controller::HTTP_OK);
 		} else {
 			$error_message = $this->form_validation->first_error();
@@ -392,6 +393,23 @@ class Api extends REST_Controller{
 
 
 	}
+    
+    
+    
+    function getCategory_get() {
+		//$user_id = $this->uri->segment(3);
+		$this->load->model("model_category");
+		$category = $this->model_category->get_all();
+        //$query = $this->db->query("SELECT * FROM category ORDER BY idCategory DESC LIMIT 1;");
+        //$query->row()
+		if (isset($category)) {
+			$this->response(array("status" => "success", "message" => $category), REST_Controller::HTTP_OK);
+		} else {
+			$this->response(array("status" => "failed", "message" => "The category could not be found."), REST_Controller::HTTP_NOT_FOUND);
+		}
+
+
+    }
     
     
 		
