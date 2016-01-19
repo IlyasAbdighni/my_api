@@ -426,7 +426,7 @@ class Api extends REST_Controller{
 
 
 
-    function addLikes_post () {
+    function addVote_post () {
         
         $this->load->library("form_validation");
 		$this->form_validation->set_error_delimiters('', '');
@@ -434,13 +434,13 @@ class Api extends REST_Controller{
 
 		$this->form_validation->set_rules("user_id", "id of the user ", "trim|required");
 		$this->form_validation->set_rules("history_id", "id of the record", "trim|required");
-		$this->form_validation->set_rules("like_num", "user id is required", "trim|required");
+		$this->form_validation->set_rules("vote", "user id is required", "trim|required");
         
         if ($this->form_validation->run()) {
             
             $user_id = $this->post("user_id");
             $history_id = $this->post("history_id");
-            $like_num = $this->post("like_num");
+            $vote = $this->post("vote");
             
             $this->load->model("model_history");
             $history = $this->model_history->get_by(array("idHistoty" => $history_id));
@@ -450,7 +450,47 @@ class Api extends REST_Controller{
                 $record_id = $history["Record_idRecord"];
                 
                 $this->load->model("model_record");
-                $resulet = $this->model_record->update($record_id, array("LikeNumber" => $like_num, "LikeTimeStamp" => date("Y-m-d h:i:s")));
+                $record = $this->model_record->get_by(array("idRecord" => $record_id));
+                switch ($vote) {
+                    case 1:         //add likes 
+                        $record_like = $record["LikeNumber"];
+                        $record_like += 1;
+                        $resulet = $this->model_record->update($record_id, array("LikeNumber" => $record_like, "LikeTimeStamp" => date("Y-m-d h:i:s")));
+                        break;
+                    case 2:         //add dislikes
+                        $record_dislike = $record["DislikeNumber"];
+                        $record_dislike += 1;
+                        $resulet = $this->model_record->update($record_id, array("DislikeNumber" => $record_dislike, "DislikeTimeStamp" => date("Y-m-d h:i:s")));
+                        break;
+                    case 3:         //undo a like
+                        $record_like = $record["LikeNumber"];
+                        $record_like -= 1;
+                        $resulet = $this->model_record->update($record_id, array("LikeNumber" => $record_like, "LikeTimeStamp" => date("Y-m-d h:i:s")));
+                        break;
+                    case 4:         //undo a dislike
+                        $record_dislike = $record["DislikeNumber"];
+                        $record_dislike -= 1;
+                        $resulet = $this->model_record->update($record_id, array("DislikeNumber" => $record_dislike, "DislikeTimeStamp" => date("Y-m-d h:i:s")));
+                        break;
+                    default:
+                        $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "Could not update the number of likes or dislikes in record table")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
+                }
+//                if ($vote == 0 ) {
+//                    
+//                    $record_like = $record["LikeNumber"];
+//                    $resulet = $this->model_record->update($record_id, array("LikeNumber" => $record_like++, "LikeTimeStamp" => date("Y-m-d h:i:s")));
+//                    
+//                } elseif ($vote == 1) {
+//                    
+//                    $record_dislike = $record["DislikeNumber"];
+//                    $resulet = $this->model_record->update($record_id, array("DislikeNumber" => $record_dislike++, "DislikeTimeStamp" => date("Y-m-d h:i:s")));
+//                    
+//                } else {
+//                    
+//                    $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "Could not update the number of likes or dislikes in record table")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
+//                    
+//                }
+                
                 
                 if (!$resulet) {
                     $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "Could not update the number of likes in record table")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
@@ -489,7 +529,7 @@ class Api extends REST_Controller{
                         if (!$updated_content) {
                             $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "Could not update the content table")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
                         } else {
-                            $this->response(array("status" => "success", "message" => "Successfully updated the number of likes"), REST_Controller::HTTP_OK);     
+                            $this->response(array("status" => "success", "message" => "Successfully updated the vites."), REST_Controller::HTTP_OK);     
                         }
                         
                     }
@@ -515,6 +555,7 @@ class Api extends REST_Controller{
         $query = "SELECT ";
         //$query .= "internaluser.idInternalUser as user_id, ";
         $query .= "history.idHistoty as history_id, ";
+        $query .= "record.idRecord as record_id, ";
         $query .= "history.Status_idStatus as status, ";
         $query .= "record.LikeNumber as like_num, ";
         $query .= "record.DislikeNumber as dislike_num, ";
