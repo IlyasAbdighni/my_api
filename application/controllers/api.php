@@ -398,7 +398,7 @@ class Api extends REST_Controller{
         }
         
         if (!$data) {
-            $this->response( array("status" => "failed", "message" => "mysql query is incorrect."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
+            $this->response( array("status" => "failed", "message" => "This university record is not comlete."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
         } else {
             $this->response(array("status" => "success", "message" => $data), REST_Controller::HTTP_OK);    
         }
@@ -507,6 +507,50 @@ class Api extends REST_Controller{
     
 		
 
+    public function getMyRecord_get () {
+        //SELECT internaluser.idInternalUser as user_id, history.idHistoty as history_id, history.Status_idStatus as status, record.LikeNumber as like_num, record.DislikeNumber as dislike_num, internaluser.InternalUserType_idInternalUserType as user_type, content.ContentDescription as content FROM history INNER JOIN internaluser ON history.InternalUser_idInternalUser = internaluser.idInternalUser INNER JOIN content ON history.idHistoty = content.History_idHistoty INNER JOIN record ON history.Record_idRecord = record.idRecord WHERE internaluser.idInternalUser = 26
+        
+        $user_id = $this->uri->segment(3);
+        
+        $query = "SELECT ";
+        //$query .= "internaluser.idInternalUser as user_id, ";
+        $query .= "history.idHistoty as history_id, ";
+        $query .= "history.Status_idStatus as status, ";
+        $query .= "record.LikeNumber as like_num, ";
+        $query .= "record.DislikeNumber as dislike_num, ";
+        $query .= "internaluser.InternalUserType_idInternalUserType as user_type, ";
+        $query .= "content.ContentDescription as content ";
+        $query .= "FROM history ";
+        
+        $query .= "INNER JOIN internaluser ON ";
+        $query .= "history.InternalUser_idInternalUser = internaluser.idInternalUser ";
+        
+        $query .= "INNER JOIN content ON ";
+        $query .= "history.idHistoty = content.History_idHistoty ";
+        
+        $query .= "INNER JOIN record ON ";
+        $query .= "record.idRecord = history.Record_idRecord ";
+        
+        $query .= "WHERE ";
+        $query .= "internaluser.idInternalUser = {$user_id} ";
+        //$query .= "ORDER BY history.idHistoty DESC";
+        
+        $my_record = $this->db->query($query);
+        
+        if ($my_record->num_rows() > 0 ) {
+            
+            $data = $my_record->result();
+            $this->response(array("status" => "success", "message" => array(
+                "user_id" => $user_id,
+                "about_user_contributions" => $data,
+            )), REST_Controller::HTTP_OK); 
+            
+        } else {
+            
+            $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "This user has no contributions.")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
+            
+        }
+    }
 
 
 
