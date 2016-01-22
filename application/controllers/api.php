@@ -367,6 +367,7 @@ class Api extends REST_Controller{
 
                 //$data = new ArrayObject();
                 $data = array();
+                //$data = new ArrayObject();
 
                 foreach ($records->result() as $row) {
                     //array_push($data, $row->record_id);
@@ -377,7 +378,7 @@ class Api extends REST_Controller{
 
                     $query = "SELECT ";
                     $query .= "history.idHistoty AS history_id, ";
-                    $query .= "record.idRecord as record_id, ";
+                    //$query .= "record.idRecord as record_id, ";
                     $query .= "record.Catagory_idCatagory AS category_type, ";
                     $query .= "history.Status_idStatus as status, ";
                     $query .= "history.InternalUser_idInternalUser as user_id, ";
@@ -395,7 +396,8 @@ class Api extends REST_Controller{
                     $query_result = $this->db->query($query);
 
                     if ($query_result->num_rows() > 0 ) {
-                        array_push($data, $query_result->row());
+                        array_push($data, array( "record_id" => $record_id,"record_info" => $query_result->row()));
+                        //$data->append(array("record_id" => $record_id, "record_info" => $query_result->row()));
                     }
 
                 }
