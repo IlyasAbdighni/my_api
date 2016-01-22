@@ -357,52 +357,63 @@ class Api extends REST_Controller{
         // query for get record
         
 		$university_id = $this->uri->segment(3);
-        $records = $this->db->query("SELECT idRecord as record_id FROM record WHERE University_idUniversity = {$university_id}");
-        if ($records->num_rows() > 0) {
+        
+        $this->load->model("model_university");
+        $requested_university = $this->model_university->get_by(array("idUniversity" => $university_id));
+        if ($requested_university["idUniversity"]) {
             
-            //$data = new ArrayObject();
-            $data = array();
-            
-            foreach ($records->result() as $row) {
-                //array_push($data, $row->record_id);
-                //$data->append(array("record_id" => $row->record_id));
-                //$data = $row->record_id;
+            $records = $this->db->query("SELECT idRecord as record_id FROM record WHERE University_idUniversity = {$university_id}");
+            if ($records->num_rows() > 0) {
 
-                $record_id = $row->record_id;
-                
-                $query = "SELECT ";
-                $query .= "history.idHistoty AS history_id, ";
-                $query .= "record.idRecord as record_id, ";
-                $query .= "record.Catagory_idCatagory AS category_type, ";
-                $query .= "history.Status_idStatus as status, ";
-                $query .= "history.InternalUser_idInternalUser as user_id, ";
-                $query .= "record.LikeNumber as likes, ";
-                $query .= "record.DislikeNumber as dislikes, ";
-                $query .= "content.ContentDescription as content ";
-                $query .= "FROM history ";
-                $query .= "INNER JOIN record ON ";
-                $query .= "record.idRecord = history.Record_idRecord ";
-                $query .= "INNER JOIN content ON ";
-                $query .= "history.idHistoty = content.History_idHistoty ";
-                $query .= "WHERE (record.idRecord, history.Status_idStatus) IN (({$record_id},1)) ";
-                $query .= "ORDER BY history.idHistoty DESC";
-                                
-                $query_result = $this->db->query($query);
-                
-                if ($query_result->num_rows() > 0 ) {
-                    array_push($data, $query_result->row());
+                //$data = new ArrayObject();
+                $data = array();
+
+                foreach ($records->result() as $row) {
+                    //array_push($data, $row->record_id);
+                    //$data->append(array("record_id" => $row->record_id));
+                    //$data = $row->record_id;
+
+                    $record_id = $row->record_id;
+
+                    $query = "SELECT ";
+                    $query .= "history.idHistoty AS history_id, ";
+                    $query .= "record.idRecord as record_id, ";
+                    $query .= "record.Catagory_idCatagory AS category_type, ";
+                    $query .= "history.Status_idStatus as status, ";
+                    $query .= "history.InternalUser_idInternalUser as user_id, ";
+                    $query .= "record.LikeNumber as likes, ";
+                    $query .= "record.DislikeNumber as dislikes, ";
+                    $query .= "content.ContentDescription as content ";
+                    $query .= "FROM history ";
+                    $query .= "INNER JOIN record ON ";
+                    $query .= "record.idRecord = history.Record_idRecord ";
+                    $query .= "INNER JOIN content ON ";
+                    $query .= "history.idHistoty = content.History_idHistoty ";
+                    $query .= "WHERE (record.idRecord, history.Status_idStatus) IN (({$record_id},1)) ";
+                    $query .= "ORDER BY history.idHistoty DESC";
+
+                    $query_result = $this->db->query($query);
+
+                    if ($query_result->num_rows() > 0 ) {
+                        array_push($data, $query_result->row());
+                    }
+
                 }
-                
+
             }
+
+            if (!$data) {
+                $this->response( array("status" => "failed", "message" => "Could not find the university history content."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
+            } else {
+                $this->response(array("status" => "success", "message" => $data), REST_Controller::HTTP_OK);    
+            }
+
             
+        } else {
+            $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', 'The univeristy doesn\'t exist')));
         }
         
-        if (!$data) {
-            $this->response( array("status" => "failed", "message" => "This university record is not comlete."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
-        } else {
-            $this->response(array("status" => "success", "message" => $data), REST_Controller::HTTP_OK);    
-        }
-
+            
 
 	}
     
