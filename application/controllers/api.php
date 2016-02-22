@@ -6,7 +6,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 require APPPATH . '/libraries/REST_Controller.php';
 
 class Api extends REST_Controller{
-    
+
 	function __construct()
 	{
 			// Construct the parent class
@@ -193,8 +193,8 @@ class Api extends REST_Controller{
 		}
 
 	}
-    
-    
+
+
     public function addUniversity_post() {
 
 		$this->load->library("form_validation");
@@ -216,7 +216,7 @@ class Api extends REST_Controller{
                 "UniversityWebsite" => $this->post("university_website"),
                 "UniversityLogoURL" => $this->post("university_logo"),
             );
-                
+
 			$this->load->model("model_university");
             $university_id = $this->model_university->insert($fields);
             if (!$university_id) {
@@ -231,9 +231,9 @@ class Api extends REST_Controller{
 
 
 	}
-    
-    
-    
+
+
+
     public function getUniversities_get() {
 		//$user_id = $this->uri->segment(3);
 		$this->load->model("model_university");
@@ -243,15 +243,15 @@ class Api extends REST_Controller{
 		// );
 		$universities = $this->model_university->get_all();
 		if (isset($universities)) {
-            
-            
+
+
 			$this->response(array("status" => "success", "message" => $universities), REST_Controller::HTTP_OK);
 		} else {
 			$this->response(array("status" => "failed", "message" => "The specified user could not be found."), REST_Controller::HTTP_NOT_FOUND);
 		}
 	}
-    
-    
+
+
     public function getAUniversity_get() {
 		$university_id = $this->uri->segment(3);
 		$this->load->model("model_university");
@@ -261,19 +261,21 @@ class Api extends REST_Controller{
 		// );
 		$university = $this->model_university->get_by(array("idUniversity" => $university_id) );
 		if (isset($university)) {
-            
-            
+
+
 			$this->response(array("status" => "success", "message" => $university), REST_Controller::HTTP_OK);
 		} else {
 			$this->response(array("status" => "failed", "message" => "The specified user could not be found."), REST_Controller::HTTP_NOT_FOUND);
 		}
 	}
-    
-    
-    
-    
+
+
+
+
     public function addRecord_post () {
         $this->load->library("form_validation");
+				$this->load->model("model_record");
+
 		$this->form_validation->set_error_delimiters('', '');
         $this->form_validation->set_data($this->post());
 
@@ -283,85 +285,86 @@ class Api extends REST_Controller{
 		$this->form_validation->set_rules("content", "content of this record", "trim|required");
 
 		if ($this->form_validation->run()) {
-            
-            $university_id = $this->post("university_id");
-            $category_id = $this->post("category_type");
-            $user_id = $this->post("user_id");
-            $content = $this->post("content");
-            
-            // insert university id and category type into record table
-			$this->load->model("model_record");
-            $record_id = $this->model_record->insert(array(
-                "University_idUniversity" => $university_id,
-                "Catagory_idCatagory" => $category_id,
-                "LikeNumber" => 0,
-                "DislikeNumber" => 0,
-            ));
-            
-            if (!$record_id) {
+
+      $university_id = $this->post("university_id");
+      $category_id = $this->post("category_type");
+      $user_id = $this->post("user_id");
+      $content = $this->post("content");
+			if ($this->post("record_id")) {
+				$record_id = $this->post("record_id");
+			}
+			else {
+				$record_id = $this->model_record->insert(array(
+						"University_idUniversity" => $university_id,
+						"Catagory_idCatagory" => $category_id,
+						"LikeNumber" => 0,
+						"DislikeNumber" => 0,
+				));
+			}
+      if (!$record_id) {
 				$this->response( array("status" => "failed", "message" => "An ucexpected error occured when inserting university id and category id to record table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
 			} else {
-                
-                $this->load->model("model_internal_users");
-                $user = $this->model_internal_users->get_by(array("idInternalUser" => $user_id));
-                if (isset($user["idInternalUser"])) {
-                    
-                    $user_type = $user["InternalUserType_idInternalUserType"];
-                    
-                    $fields = array(
-                        "Record_idRecord" => $record_id,
-                        "Record_University_idUniversity" => $university_id,
-                        "Record_Catagory_idCatagory" => $category_id,
-                        "InternalUser_idInternalUser" => $user_id,
-                        "InternalUser_InternalUserType_idInternalUserType" => $user_type,
-                        "Status_idStatus" => 2,
-                        
-                    );
-                    
-                    $this->load->model("model_history");
-                    $history_id = $this->model_history->insert($fields);
-                    if (!$history_id) {
-                        $this->response( array("status" => "failed", "message" => "Could not update history table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
-                    } else {
-                        $this->load->model("model_content");
-                        $content_fields = array(
-                            "ContentDescription" => $content,
-                            "History_idHistoty" => $history_id
-                        );
-                        $content_id = $this->model_content->insert($content_fields);
-                        if(!$content_id) {
-                            $this->response( array("status" => "failed", "message" => "Could not update content table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
-                        } else {
-                            $this->response(array("status" => "success", "message" => "successfully updated"), REST_Controller::HTTP_OK);    
-                        }
-                        
-                    }
+
+        $this->load->model("model_internal_users");
+        $user = $this->model_internal_users->get_by(array("idInternalUser" => $user_id));
+        if (isset($user["idInternalUser"])) {
+
+            $user_type = $user["InternalUserType_idInternalUserType"];
+
+            $fields = array(
+                "Record_idRecord" => $record_id,
+                "Record_University_idUniversity" => $university_id,
+                "Record_Catagory_idCatagory" => $category_id,
+                "InternalUser_idInternalUser" => $user_id,
+                "InternalUser_InternalUserType_idInternalUserType" => $user_type,
+                "Status_idStatus" => 2,
+
+            );
+
+            $this->load->model("model_history");
+            $history_id = $this->model_history->insert($fields);
+            if (!$history_id) {
+                $this->response( array("status" => "failed", "message" => "Could not update history table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
+            } else {
+                $this->load->model("model_content");
+                $content_fields = array(
+                    "ContentDescription" => $content,
+                    "History_idHistoty" => $history_id
+                );
+                $content_id = $this->model_content->insert($content_fields);
+                if(!$content_id) {
+                    $this->response( array("status" => "failed", "message" => "Could not update content table."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
                 } else {
-                    $this->response(array("status" => "failed", "message" => "The specified user could not be found."), REST_Controller::HTTP_NOT_FOUND);
+                    $this->response(array("status" => "success", "message" => "successfully updated"), REST_Controller::HTTP_OK);
                 }
+
+            }
+        } else {
+            $this->response(array("status" => "failed", "message" => "The specified user could not be found."), REST_Controller::HTTP_NOT_FOUND);
+        }
 			}
 		} else {
 			$error_message = $this->form_validation->first_error();
 			$this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', $error_message)));
-		}   
+		}
     }
-    
-    
-    
-    
+
+
+
+
     function getRecord_get() {
         //SELECT history.idHistoty AS history_id, record.idRecord as record_id, record.University_idUniversity as university_id, record.Catagory_idCatagory AS category_type, history.Status_idStatus as status, history.InternalUser_idInternalUser as user_id FROM record INNER JOIN history ON record.idRecord = history.Record_idRecord WHERE history.Status_idStatus = 1  ORDER BY history.idHistoty DESC
-        
-        
+
+
         //SELECT history.idHistoty AS history_id, record.idRecord as record_id, record.University_idUniversity as university_id, record.Catagory_idCatagory AS category_type, history.Status_idStatus as status, history.InternalUser_idInternalUser as user_id FROM record INNER JOIN history ON record.idRecord = history.Record_idRecord WHERE (record.idRecord, history.Status_idStatus) IN ((18,1)) ORDER BY history.idHistoty DESC
         // query for get record
-        
+
 		$university_id = $this->uri->segment(3);
-        
+
         $this->load->model("model_university");
         $requested_university = $this->model_university->get_by(array("idUniversity" => $university_id));
         if ($requested_university["idUniversity"]) {
-            
+
             $records = $this->db->query("SELECT idRecord as record_id FROM record WHERE University_idUniversity = {$university_id}");
             if ($records->num_rows() > 0) {
 
@@ -407,20 +410,20 @@ class Api extends REST_Controller{
             if (!$data) {
                 $this->response( array("status" => "failed", "message" => "Could not find the university history content."), REST_Controller::HTTP_INTERNAL_SERVER_ERROR );
             } else {
-                $this->response(array("status" => "success", "message" => $data), REST_Controller::HTTP_OK);    
+                $this->response(array("status" => "success", "message" => $data), REST_Controller::HTTP_OK);
             }
 
-            
+
         } else {
             $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', 'The univeristy doesn\'t exist')));
         }
-        
-            
+
+
 
 	}
-    
-    
-    
+
+
+
     function getCategory_get() {
 		//$user_id = $this->uri->segment(3);
 		$this->load->model("model_category");
@@ -440,7 +443,7 @@ class Api extends REST_Controller{
 
 
     function addVote_post () {
-        
+
         $this->load->library("form_validation");
 		$this->form_validation->set_error_delimiters('', '');
         $this->form_validation->set_data($this->post());
@@ -448,24 +451,24 @@ class Api extends REST_Controller{
 		$this->form_validation->set_rules("user_id", "id of the user ", "trim|required");
 		$this->form_validation->set_rules("history_id", "id of the record", "trim|required");
 		$this->form_validation->set_rules("vote", "user id is required", "trim|required");
-        
+
         if ($this->form_validation->run()) {
-            
+
             $user_id = $this->post("user_id");
             $history_id = $this->post("history_id");
             $vote = $this->post("vote");
-            
+
             $this->load->model("model_history");
             $history = $this->model_history->get_by(array("idHistoty" => $history_id));
             if (!$history["idHistoty"]) {
                 $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "Could not find speicfied history")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
             } else {
                 $record_id = $history["Record_idRecord"];
-                
+
                 $this->load->model("model_record");
                 $record = $this->model_record->get_by(array("idRecord" => $record_id));
                 switch ($vote) {
-                    case 1:         //add likes 
+                    case 1:         //add likes
                         $record_like = $record["LikeNumber"];
                         $record_like += 1;
                         $resulet = $this->model_record->update($record_id, array("LikeNumber" => $record_like, "LikeTimeStamp" => date("Y-m-d h:i:s")));
@@ -488,34 +491,18 @@ class Api extends REST_Controller{
                     default:
                         $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "Could not update the number of likes or dislikes in record table")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
                 }
-//                if ($vote == 0 ) {
-//                    
-//                    $record_like = $record["LikeNumber"];
-//                    $resulet = $this->model_record->update($record_id, array("LikeNumber" => $record_like++, "LikeTimeStamp" => date("Y-m-d h:i:s")));
-//                    
-//                } elseif ($vote == 1) {
-//                    
-//                    $record_dislike = $record["DislikeNumber"];
-//                    $resulet = $this->model_record->update($record_id, array("DislikeNumber" => $record_dislike++, "DislikeTimeStamp" => date("Y-m-d h:i:s")));
-//                    
-//                } else {
-//                    
-//                    $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "Could not update the number of likes or dislikes in record table")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
-//                    
-//                }
-                
-                
+
                 if (!$resulet) {
                     $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "Could not update the number of likes in record table")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
                 } else {
                     $records = $this->model_record->get_by(array("idRecord" => $record_id));
                     $university_id = $records["University_idUniversity"];
                     $category_type = $records["Catagory_idCatagory"];
-                    
+
                     $this->load->model("model_internal_users");
                     $user = $this->model_internal_users->get_by(array("idInternalUser" => $user_id));
                     $user_type = $user["InternalUserType_idInternalUserType"];
-                    
+
                     $this->load->model("model_history");
                     $new_history_id = $this->model_history->insert(array(
                         "Status_idStatus" => 1,
@@ -524,47 +511,47 @@ class Api extends REST_Controller{
                         "Record_Catagory_idCatagory" => $category_type,
                         "InternalUser_idInternalUser" => $user_id,
                         "InternalUser_InternalUserType_idInternalUserType" => $user_type,
-                        
+
                     ));
-                    
+
                     if (!$new_history_id) {
-                        
+
                         $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "Could not update the number of likes in record table")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
                     } else {
-                        
+
                         $this->load->model("model_content");
                         $content = $this->model_content->get_by(array("History_idHistoty" => $history_id));
                         $content_id = $content["idContent"];
                         $updated_content = $this->model_content->update($content_id, array(
                             "History_idHistoty" => $new_history_id,
                         ));
-                        
+
                         if (!$updated_content) {
                             $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "Could not update the content table")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
                         } else {
-                            $this->response(array("status" => "success", "message" => "Successfully updated the vites."), REST_Controller::HTTP_OK);     
+                            $this->response(array("status" => "success", "message" => "Successfully updated the vites."), REST_Controller::HTTP_OK);
                         }
-                        
+
                     }
-                    
+
                 }
-                
+
             }
-            
+
         } else {
             $error_message = $this->form_validation->first_error();
 			$this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', $error_message)), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    
-    
-		
+
+
+
 
     public function getMyRecord_get () {
         //SELECT internaluser.idInternalUser as user_id, history.idHistoty as history_id, history.Status_idStatus as status, record.LikeNumber as like_num, record.DislikeNumber as dislike_num, internaluser.InternalUserType_idInternalUserType as user_type, content.ContentDescription as content FROM history INNER JOIN internaluser ON history.InternalUser_idInternalUser = internaluser.idInternalUser INNER JOIN content ON history.idHistoty = content.History_idHistoty INNER JOIN record ON history.Record_idRecord = record.idRecord WHERE internaluser.idInternalUser = 26
-        
+
         $user_id = $this->uri->segment(3);
-        
+
         $query = "SELECT ";
         //$query .= "internaluser.idInternalUser as user_id, ";
         $query .= "history.idHistoty as history_id, ";
@@ -575,34 +562,34 @@ class Api extends REST_Controller{
         $query .= "internaluser.InternalUserType_idInternalUserType as user_type, ";
         $query .= "content.ContentDescription as content ";
         $query .= "FROM history ";
-        
+
         $query .= "INNER JOIN internaluser ON ";
         $query .= "history.InternalUser_idInternalUser = internaluser.idInternalUser ";
-        
+
         $query .= "INNER JOIN content ON ";
         $query .= "history.idHistoty = content.History_idHistoty ";
-        
+
         $query .= "INNER JOIN record ON ";
         $query .= "record.idRecord = history.Record_idRecord ";
-        
+
         $query .= "WHERE ";
         $query .= "internaluser.idInternalUser = {$user_id} ";
         //$query .= "ORDER BY history.idHistoty DESC";
-        
+
         $my_record = $this->db->query($query);
-        
+
         if ($my_record->num_rows() > 0 ) {
-            
+
             $data = $my_record->result();
             $this->response(array("status" => "success", "message" => array(
                 "user_id" => $user_id,
                 "about_user_contributions" => $data,
-            )), REST_Controller::HTTP_OK); 
-            
+            )), REST_Controller::HTTP_OK);
+
         } else {
-            
+
             $this->response(array("status" => "failed", "message" => preg_replace('#[\n]+#', '', "This user has no contributions.")), REST_Controller::HTTP_INTERNAL_SERVER_ERROR);
-            
+
         }
     }
 
