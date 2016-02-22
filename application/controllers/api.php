@@ -292,6 +292,14 @@ class Api extends REST_Controller{
       $content = $this->post("content");
 			if ($this->post("record_id")) {
 				$record_id = $this->post("record_id");
+				$this->db->where(array(
+					"University_idUniversity" => $university_id,
+					"Catagory_idCatagory" => $category_id,
+				));
+				$record_result = $this->db->get("record");
+				if ($record_result->num_rows() == 0) {
+					$this->response( array("status" => "failed", "message" => "Could not find the record you are updating."));
+				}
 			}
 			else {
 				$record_id = $this->model_record->insert(array(
